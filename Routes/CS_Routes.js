@@ -177,29 +177,29 @@ router.post("/Glogin", async (req, res) => {
         // const user = await new CSProfileModel({ email: email, name: name,  userId : userId, 
         //     isApproved:isApproved, ipAddress:ipAddress})
         const result = await user.save(user)                     
-var transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: 'bluenetwrk@gmail.com',
-      pass: 'vwzv axcq ywrw bxjd'
-    }
-  });
-  var mailOptions = {
-    from: 'bluenetwrk@gmail.com',
-    to: result.email,
-    subject: `Successfully Registered with Itwalkin`,
-    html: '<p>Welcome to Itwalkin Job Portal</p>'+'<p>click <a href="http://www.itwalkin.com">itwalkin</a> to explore more </p>'
-  };
+// var transporter = nodemailer.createTransport({
+//     service: 'gmail',
+//     auth: {
+//       user: 'bluenetwrk@gmail.com',
+//       pass: 'vwzv axcq ywrw bxjd'
+//     }
+//   });
+//   var mailOptions = {
+//     from: 'bluenetwrk@gmail.com',
+//     to: result.email,
+//     subject: `Successfully Registered with Itwalkin`,
+//     html: '<p>Welcome to Itwalkin Job Portal</p>'+'<p>click <a href="http://www.itwalkin.com">itwalkin</a> to explore more </p>'
+//   };
   
-  transporter.sendMail(mailOptions,  function(error, info){
-    if (error) {
-    //   console.log(error);
-    //    res.send("could not send the mail")
-    } else {
-    //   console.log('Email sent: ' + info.response);
-    //    res.send(" mail sent succesfully")
-    }
-  });
+//   transporter.sendMail(mailOptions,  function(error, info){
+//     if (error) {
+//     //   console.log(error);
+//     //    res.send("could not send the mail")
+//     } else {
+//     //   console.log('Email sent: ' + info.response);
+//     //    res.send(" mail sent succesfully")
+//     }
+//   });
   let gtoken = jwt.sign({id:result._id},secretKey)
             res.send({status : "success" ,token : gtoken ,id: result._id ,action:"registered"
                 })
@@ -221,7 +221,7 @@ router.post("/Userlogin", async (req, res) => {
     try {
     let { CSId, gtoken, jobseeker_email,email,jobseeker_mobile, name, isApproved, ipAddress } = (req.body)
 
-        let user = await StudentProfileModel.findOne({ email: email });
+        let user = await StudentProfileModel.findOne({ jobseeker_email: jobseeker_email });
         if (user == null) {
         const user = await new StudentProfileModel(req.body)
         // const user = await new CSProfileModel({ email: email, name: name,  userId : userId, 
@@ -236,7 +236,7 @@ var transporter = nodemailer.createTransport({
   });
   var mailOptions = {
     from: 'bluenetwrk@gmail.com',
-    to: result.email,
+    to: result.jobseeker_email,
     subject: `Successfully Registered with Itwalkin`,
     html: '<p>Welcome to Itwalkin Job Portal</p>'+'<p>click <a href="http://www.itwalkin.com">itwalkin</a> to explore more </p>'
   };
