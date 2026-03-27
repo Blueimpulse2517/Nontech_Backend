@@ -219,7 +219,7 @@ router.post("/Glogin", async (req, res) => {
 router.post("/Userlogin", async (req, res) => {
     // console.log(req.body)
     try {
-    let { CSId, gtoken, jobseeker_email,email,jobseeker_mobile, name, isApproved, ipAddress } = (req.body)
+    let { CSId, gtoken, jobseeker_email,jobseeker_name,email,jobseeker_phone,created_date, resume_type,created_resume,name, isApproved, ipAddress } = (req.body)
 
         let user = await StudentProfileModel.findOne({ jobseeker_email: jobseeker_email });
         if (user == null) {

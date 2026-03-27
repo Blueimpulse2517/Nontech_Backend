@@ -165,57 +165,161 @@ router.post("/verifyOtp", async (req, res) => {
         res.send("backend issue")
     }
 })
+// router.post("/Glogin", async (req, res) => {
+//     // console.log(req.body)
+//     try {
+//     let { userId, gtoken, email, name, isApproved, ipAddress,Gpicture } = (req.body)
+
+//         let user = await EmpProfileModel.findOne({ email: email });
+//         if (user == null) {
+//         //const user = await new EmpProfileModel(req.body)
+//             const user = await new EmpProfileModel({ email: email, name: name,  userId : userId, 
+//              isApproved:isApproved, ipAddress:ipAddress, Gpicture: Gpicture })
+//         const result = await user.save(user)                     
+// var transporter = nodemailer.createTransport({
+//     service: 'gmail',
+//     auth: {
+//       user: 'admin@itwalkin.com',
+//       pass: 'hvzd mjnq yfxa eljs'
+//     }
+//   });
+//   var mailOptions = {
+//     from: 'admin@itwalkin.com',
+//     to: result.email,
+//     subject: `Successfully Registered with Itwalkin`,
+//     html: '<p>Welcome to Itwalkin Job Portal</p>'+'<p>click <a href="http://www.itwalkin.in">itwalkin</a> to explore more </p>'
+//   };
+
+//   transporter.sendMail(mailOptions,  function(error, info){
+//     if (error) {
+//     //   console.log(error);
+//     //    res.send("could not send the mail")
+//     } else {
+//     //   console.log('Email sent: ' + info.response);
+//     //    res.send(" mail sent succesfully")
+//     }
+//   });
+//   let gtoken = jwt.sign({id:result._id},secretKey)
+//             res.send({status : "success" ,token : gtoken ,id: result._id ,action:"registered"
+//                 })
+//         } else {   
+//             let Nowtime = Date()  
+//             let result = await EmpProfileModel.updateOne(
+//                 {_id: user._id},
+//                {$set: {LogedInTime:Nowtime,Gpicture: Gpicture}},
+//                {$set:req.body}
+//             )
+//             let gtoken = jwt.sign({id:user._id},secretKey)
+//             res.send({status : "success" ,token : gtoken ,id: user._id, action:"login"})
+//         }
+//     } catch (err) {
+//         res.send(err)
+//     }
+// })
+
+
 router.post("/Glogin", async (req, res) => {
-    // console.log(req.body)
     try {
-    let { userId, gtoken, email, name, isApproved, ipAddress,Gpicture } = (req.body)
+        let { userId, gtoken, email, name, isApproved, ipAddress, Gpicture } = req.body;
 
-        let user = await EmpProfileModel.findOne({ email: email });
-        if (user == null) {
-        //const user = await new EmpProfileModel(req.body)
-            const user = await new EmpProfileModel({ email: email, name: name,  userId : userId, 
-             isApproved:isApproved, ipAddress:ipAddress, Gpicture: Gpicture })
-        const result = await user.save(user)                     
-var transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: 'admin@itwalkin.com',
-      pass: 'hvzd mjnq yfxa eljs'
-    }
-  });
-  var mailOptions = {
-    from: 'admin@itwalkin.com',
-    to: result.email,
-    subject: `Successfully Registered with Itwalkin`,
-    html: '<p>Welcome to Itwalkin Job Portal</p>'+'<p>click <a href="http://www.itwalkin.in">itwalkin</a> to explore more </p>'
-  };
+        console.log('🔍 Verifying Google Business ownership for:', email);
 
-  transporter.sendMail(mailOptions,  function(error, info){
-    if (error) {
-    //   console.log(error);
-    //    res.send("could not send the mail")
-    } else {
-    //   console.log('Email sent: ' + info.response);
-    //    res.send(" mail sent succesfully")
-    }
-  });
-  let gtoken = jwt.sign({id:result._id},secretKey)
-            res.send({status : "success" ,token : gtoken ,id: result._id ,action:"registered"
-                })
-        } else {   
-            let Nowtime = Date()  
-            let result = await EmpProfileModel.updateOne(
-                {_id: user._id},
-               {$set: {LogedInTime:Nowtime,Gpicture: Gpicture}},
-               {$set:req.body}
-            )
-            let gtoken = jwt.sign({id:user._id},secretKey)
-            res.send({status : "success" ,token : gtoken ,id: user._id, action:"login"})
+        // ✅ STEP 1: Verify Google Business Profile ownership using gtoken
+        let hasBusiness = false;
+        let businesses = [];
+        
+        try {
+            // Check Google Business Locations API
+            const businessRes = await axios.get('https://mybusiness.googleapis.com/v4/accounts/~owner/locations', {
+                headers: { 
+                    Authorization: `Bearer ${gtoken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            businesses = businessRes.data.locations || [];
+            hasBusiness = businesses.length > 0;
+            console.log(`✅ Found ${businesses.length} business(es)`);
+            
+        } catch (businessError) {
+            console.log('ℹ️ No business found (normal for non-owners)');
+            // 403/404 = No business = Expected for non-owners
+            if (businessError.response?.status !== 403 && businessError.response?.status !== 404) {
+                console.error('Business API error:', businessError.response?.data);
+            }
         }
-    } catch (err) {
-        res.send(err)
+
+        // ✅ STEP 2: Check if user exists
+        let user = await EmpProfileModel.findOne({ email: email });
+        
+        if (user == null) {
+            // NEW USER - Only create if they have business OR approved
+            if (!hasBusiness && !isApproved) {
+                return res.json({
+                    success: false,
+                    message: '❌ No Google Business Profile found. Only business owners can register.',
+                    hasBusiness: false,
+                    businessCount: 0
+                });
+            }
+
+            // ✅ Create user (business owner or approved)
+            user = new EmpProfileModel({ 
+                email, 
+                name, 
+                userId,
+                isApproved: hasBusiness ? true : isApproved, // Auto-approve business owners
+                ipAddress,
+                Gpicture,
+                hasBusiness, // NEW FIELD
+                businessCount: businesses.length,
+                businesses: businesses.slice(0, 3) // Store first 3 businesses
+            });
+            
+            const result = await user.save();
+            console.log('✅ New business user created:', email);
+        } else {
+            // EXISTING USER - Update business status
+            user.hasBusiness = hasBusiness;
+            user.businessCount = businesses.length;
+            user.businesses = businesses.slice(0, 3);
+            await user.save();
+        }
+
+        // ✅ STEP 3: Generate JWT token
+        const token = jwt.sign(
+            { 
+                userId: user._id, 
+                email: user.email,
+                hasBusiness: user.hasBusiness 
+            }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '7d' }
+        );
+
+        res.json({
+            success: true,
+            message: hasBusiness ? '✅ Business verified!' : '✅ Login successful',
+            token,
+            user: {
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                hasBusiness: user.hasBusiness,
+                businessCount: user.businessCount || 0
+            }
+        });
+
+    } catch (error) {
+        console.error('Glogin error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Login failed',
+            error: error.message
+        });
     }
-})
+});
+
 
 router.post("/NewEmployeeRegistration",  async(req, res)=>{
     // console.log(req.body)

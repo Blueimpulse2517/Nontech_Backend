@@ -91,6 +91,13 @@ const profileSchema= new mongoose.Schema({
     online:{
         type:Boolean
     },
+    hasBusiness: { type: Boolean, default: false },
+businessCount: { type: Number, default: 0 },
+businesses: [{
+    id: String,
+    name: String,
+    verified: String
+}],
     message:{
 
     }

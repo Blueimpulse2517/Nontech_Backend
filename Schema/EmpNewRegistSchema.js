@@ -75,6 +75,13 @@ type:String
     LogedInTime:{
         type:Date
     },
+    hasBusiness: { type: Boolean, default: false },
+businessCount: { type: Number, default: 0 },
+businesses: [{
+    id: String,
+    name: String,
+    verified: String
+}],
     online:{
         type:Boolean
     }

@@ -1,31 +1,9 @@
 const mongoose = require("mongoose")
 
-const profileSchema= new mongoose.Schema({
+const profileSchemadup= new mongoose.Schema({
     image : {
         type:String
     },   
-    CSId:{
-        type: String
-    },
-    jobseeker_name:{
-        type: String
-    },
-    jobseeker_email:{
-        type: String,
-        unique: true
-    },
-    jobseeker_phone:{
-        type:String
-    },
-    created_date:{
-        type:Date
-    },
-    resume_type:{
-        type: String
-    },
-    created_resume:{
-        type: String
-    },
     name:{
         type:String
     },
@@ -36,9 +14,13 @@ const profileSchema= new mongoose.Schema({
     ipAddress:{
         type:String
     },
-    message:{
+    Gpicture : { 
         type:String
     },
+    message:{
+        type:String
+    
+        },
     phoneNumber:{
         type:String
     },
@@ -57,10 +39,22 @@ const profileSchema= new mongoose.Schema({
     AboutCompany:{
         type:String
     },
+    PrimeryuserDesignation:{
+        type:String
+    },
+    Secondaryusername:{
+        type: String
+    },
+    Secondaryuseremailid:{
+        type: String,
+        unique: true
+    },
+    Secondaryusercontactnumber:{
+        type:String
+    },
     secondaryuserDesignation:{
         type:String
     },
-    
     CompanyName:{
         type:String
     },
@@ -79,6 +73,9 @@ const profileSchema= new mongoose.Schema({
     TypeofOrganisation:{
         type:String
     },
+    AboutCompany:{
+        type: String
+    },
     isApproved:{
         type:Boolean
     },
@@ -93,11 +90,14 @@ const profileSchema= new mongoose.Schema({
     },
     online:{
         type:Boolean
+    },
+    message:{
+
     }
 },
 {timestamps:true}
 )
 
-const profileModel= mongoose.model("CS-Profile",profileSchema)
+const profileModeldup= mongoose.model("Employee-Profile",profileSchemadup)
 
-module.exports=profileModel
+module.exports=profileModeldup
